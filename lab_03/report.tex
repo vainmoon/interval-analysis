@@ -1,0 +1,269 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english, russian]{babel}
+\usepackage{graphicx}
+\graphicspath{ {./graphics/} }
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\pagestyle{empty} %
+\usepackage[pageanchor]{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{indentfirst}
+\usepackage{tikz}
+
+\newcommand{\kaucher}{
+  \begin{tikzpicture}
+    \draw (0, 0) circle (0.6ex);
+    \draw (-0.6ex, 0) -- (0.6ex, 0);
+  \end{tikzpicture}%
+}
+
+\begin{document}
+  \begin{titlepage}
+    \begin{center}
+      Санкт-Петербургский политехнический университет \\Петра Великого
+    \end{center}
+
+    \begin{center}
+      Физико-механический институт
+    \end{center}
+
+    \begin{center}
+      Высшая школа прикладной математики и вычислительной\\ физики
+    \end{center}
+
+    \vspace{8em}
+
+    \begin{center}
+      \textbf{Отчет по лабораторной работе №3}\\
+      \textbf{“Интервальный анализ”}
+    \end{center}
+
+    \vspace{\fill}
+
+    \begin{flushright}
+      \noindentВыполнили студент группы 5030102/10201:
+      \hfill
+      Умнов Сергей Алексеевич \\
+    \end{flushright}
+    Преподаватель: \hfill Баженов Александр Николаевич
+
+    \vspace{12em}
+
+    \begin{center}
+      Санкт-Петербург\\
+      2024
+    \end{center}
+  \end{titlepage}
+
+  \tableofcontents
+
+  \newpage
+
+  \section{Постановка задачи}
+
+  Даны 2 интервальных выборки
+
+  \begin{equation}
+    \mathbf{X} = \{ \mathbf{x}_i \},
+  \end{equation}
+  \begin{equation}
+    \mathbf{Y} = \{ \mathbf{y}_i \}.
+  \end{equation}
+
+  Взять \( \mathbf{X}, \mathbf{Y} \) из файлов данных, задав
+  \( \text{rad} \mathbf{x} = \text{rad} \mathbf{y} = \frac{1}{2^N} \text{В} \),
+  \( N = 14 \).
+
+  Файлы данных:
+  \begin{itemize}
+    \item \emph{-0.205\_lvl\_side\_a\_fast\_data.bin}
+    \item \emph{0.225\_lvl\_side\_a\_fast\_data.bin}
+  \end{itemize}
+
+  Связь кодов данных и В:
+
+  \begin{equation*}
+    V = N  / 16384 - 0.5
+  \end{equation*}
+
+  Сделать оценки констант \( a \), \( t \) в уравнениях:
+  \begin{equation}
+    \mathbf{X} + a = \mathbf{Y},
+  \end{equation}
+  \begin{equation}
+    t\mathbf{X} = \mathbf{Y},
+  \end{equation}
+
+  Метод решения:
+
+  \begin{equation}
+    \hat a = \text{argmax} F(a, \mathbf{X}, \mathbf{Y}),
+  \end{equation}
+
+  где \( F \) --- функционал.
+
+  В качестве функционала взять варианты:
+
+  \begin{equation} \label{eq:F_1}
+    \text{Ji} (a, \mathbf{X}, \mathbf{Y}),
+  \end{equation}
+  \begin{equation} \label{eq:F_2}
+    \text{Ji} (a, \text{mode} \mathbf{X}, \text{mode} \mathbf{Y}),
+  \end{equation}
+  \begin{equation} \label{eq:F_3}
+    \text{Ji} (a, \text{med}_K \mathbf{X}, \text{med}_K \mathbf{Y}),
+  \end{equation}
+  \begin{equation} \label{eq:F_4}
+    \text{Ji} (a, \text{med}_P \mathbf{X}, \text{med}_P \mathbf{Y}),
+  \end{equation}
+
+  где \( \text{Ji} \) --- коэффициент Жаккара,
+  \( \text{mode} \) --- интервальная мода,
+  \( \text{med}_K \), \( \text{med}_P \) --- интервальные медианы Крейновича
+  и Пролубникова.
+
+  Сделать точечные и интервальные оценки, задавшись уровнем \( \alpha \).
+
+  \section{Теория}
+
+  \subsection{Интервальная мода}
+
+  Пусть имеется интервальная выборка
+
+  \[
+    \mathbf{X} = \{ \mathbf{x}_i \}.
+  \]
+
+  Сформируем массив интервалов \( \mathbf{z} \) из концов интервалов
+  \( \mathbf{X} \).
+
+  Для каждого интервала \( \mathbf{z}_i \) подсчитываем число \( \mu_i \)
+  интервалов из выборки \( \mathbf{X}_i \), включающих \( \mathbf{z}_i \).
+  Максимальные \( \mu_i = \max \mu \) достигаются для индексного множества
+  \( K \). Тогда можно найти интервальную моду как мультиинтервал.
+
+  \begin{equation}
+    \text{mode} \mathbf{X} = \bigcup_{k \in K} \mathbf{z}_k.
+  \end{equation}
+
+  \subsection{Интервальная медиана Крейновича}
+
+  Пусть дана выборка \( \mathbf{X} = \{ \mathbf{x}_i \} \). 
+  
+  Пусть
+  \( \underline c = \{ \underline{\mathbf{x}_i} \} \),
+  \( \overline c = \{ \overline{\mathbf{x}_i} \} \) --- конфигурация
+  точек, составленных, соответственно, из левых и правых концов интервалов
+  из \( \mathbf{X} \).
+
+  Тогда медианой Крейновича \( \text{med}_K \mathbf{X} \) интервальной
+  выборки \( \mathbf{X} \) --- это интервал
+
+  \begin{equation}
+    \text{med}_K = [\text{med} \underline c, \text{med} \overline c].
+  \end{equation}
+  \subsection{Интервальная медиана Пролубникова}
+
+  Медиана Пролубникова \( \text{med}_P \mathbf{X} \) выборки
+  \( \mathbf{X} \) --- это интервал \( \mathbf{x}_m \), для которого
+  половина интервалов из \( \mathbf{X} \) лежит слева, а половина
+  --- справа.
+
+  В ситуации, когда имеются два элемента подинтервала \( \mathbf{x}_m \)
+  и \( \mathbf{x}_{m+1} \), распо­ложенных посередине вариационного ряда,
+  \( \mathbf{x}_m \ne \mathbf{x}_{m+1} \) медиана может быть определена
+  естественным обобщением взятия полусуммы точечных значений,
+  расположенных посередине ряда из точечных значений, в случае
+  интервальной выборки взятие полусуммы интервалов \( \mathbf{x}_m \)
+  и \( \mathbf{x}_{m+1} \):
+
+  \begin{equation}
+    \text{med}_P \mathbf{X} = (\mathbf{x}_m + \mathbf{x}_{m+1}) / 2.
+  \end{equation}
+
+  \subsection{Коэффициент Жаккара}
+
+  Коэффициент Жаккара для двух интервалов \( \mathbf{x} \in \mathbb{IR} \)
+  и \( \mathbf{y} \in \mathbb{IR} \):
+
+  \begin{equation}
+    \text{Ji} (\mathbf{x}, \mathbf{y})
+      = \frac{\text{wid} (x \land y)}{\text{wid} (x \lor y)}
+      = \frac{\min \{ \overline{\mathbf{x}}, \overline{\mathbf{y}} \} - \max \{ \underline{\mathbf{x}}, \underline{\mathbf{y}} \}}
+        {\max\{ \overline{\mathbf{x}}, \overline{\mathbf{y}} \} - \min \{ \underline{\mathbf{x}}, \underline{\mathbf{y}} \}}.
+  \end{equation}
+
+  Коэффициент Жаккара для множества интервалов
+  \( \mathbf{X} \in \mathbb{IR}^n \):
+
+  \begin{equation}
+    \text{Ji} (\mathbf{X})
+      = \frac{\min \overline{\mathbf{x}_i} - \max \underline{\mathbf{x}_i}}
+        {\max \overline{\mathbf{x}_i} - \min \underline{\mathbf{x}_i}}.
+  \end{equation}
+
+  Коэффициент Жаккара для двух множеств интервалов
+  \( \mathbf{X} \in \mathbb{IR}^n \) и \( \mathbf{Y} \in \mathbb{IR}^n \):
+
+  \begin{equation}
+    \text{Ji}_k (\mathbf{X}, \mathbf{Y})
+      = \frac{\min \{ \overline{\mathbf{x}_k}, \overline{\mathbf{y}_k} \} - \max \{ \underline{\mathbf{x}_k}, \underline{\mathbf{y}_k} \}}
+        {\max\{ \overline{\mathbf{x}_k}, \overline{\mathbf{y}_k} \} - \min \{ \underline{\mathbf{x}_k}, \underline{\mathbf{y}_k} \}},
+      \ k \in 1, 2, \dots, |\mathbf{X}|.
+  \end{equation}
+
+  \section{Реализаця}
+
+  Лабораторная работа выполнена на языке программирования Python. В ходе
+  работы были также использованы библиотеки \verb!numpy! и \verb!intvalpy!
+
+  Ссылка на GitHub репозиторий:
+  \url{https://github.com/vainmoon/interval-analysis}
+
+  \subsection{Алгоритм}
+
+  Для поиска параметров, при которых функционал достигал наибольших
+  значений, был использован алгоритм троичного поиска с заданной точностью
+  \( \varepsilon = 10^{-3} \) на участках, где функции вели
+  себя как унимодальные.
+
+  Его же будем использовать для рассчёта интервальной оценки параметров \( a, t\) с уровнем значимости \( \alpha = 0.05 \)
+
+  \section{Результаты}
+
+  Для функцинала со стнадартными интервальными выборками (\ref{eq:F_1}):
+
+  \[ \hat a = 0.34278 \pm 0.0005, \ F_1 (\hat a) = -0.94918, \]
+  \[ \hat t = -1.01467 \pm 0.0005, \ F_1 (\hat t) = -0.92734. \]
+
+  Для функцинала с интервальными модами (\ref{eq:F_2}):
+
+  \[ \hat a = 0.34023 \pm 0.0005, \ F_2 (\hat a) = -0.25437, \]
+  \[ \hat t = -0.99871 \pm 0.0005, \ F_2 (\hat t) = -0.92750. \]
+
+  Для функцинала с интервальными медианами Крейновича (\ref{eq:F_3}):
+
+  \[ \hat a = 0.34415 \pm 0.0005, \ F_3 (\hat a) = -0.00184, \]
+  \[ \hat t = -1.00607 \pm 0.0005, \ F_3 (\hat t) = 0.63020. \]
+
+  Для функцинала с интервальными медианами Пролубникова (\ref{eq:F_4}):
+
+  \[ \hat a = 0.34366 \pm 0.0005, \ F_4 (\hat a) = -0.12457, \]
+  \[ \hat t = -1.00607 \pm 0.0005, \ F_4 (\hat t) = 0.63021. \]
+  \section{Выводы}
+
+  В процессе выполнения лабораторной работы были рассмотрены подходы к оценке параметров в уравнениях, содержащих интервальные данные. На основе использования различных функционалов, включая коэффициент Жаккара, были определены оптимальные значения параметров \( \hat{a} \) и \( \hat{t} \) для уравнений вида \( \mathbf{X} + a = \mathbf{Y} \) и \( t\mathbf{X} = \mathbf{Y} \).
+  
+  На основании полученных результатов можно сделать следующие выводы:
+  
+  \begin{enumerate}
+      \item Значения параметров \( \hat{a} \) и \( \hat{t} \) зависят от выбранного функционала. Это подчеркивает необходимость тщательного подхода к выбору критерия оптимальности при решении задач интервального анализа.
+      \item Наиболее устойчивые значения были получены при использовании функционала с интервальными медианами Крейновича (\ref{eq:F_3}). Оптимальное значение параметра \( \hat{t} \) в этом случае демонстрирует положительное значение коэффициента Жаккара, что свидетельствует о хорошем уровне совпадения интервалов.
+      \item Использование интервальной моды и медиан (в интерпретации Крейновича и Пролубникова) в качестве статистических характеристик позволило повысить точность оценок параметров, что подчеркивает их значимость для анализа данных с интервальной природой.
+  \end{enumerate}
+  
+  Таким образом, выполненная работа показала практическую применимость и эффективность методов интервального анализа для задач параметрической оценки, а также акцентировала внимание на важности выбора адекватных инструментов и методов для обработки данных.
+\end{document}
