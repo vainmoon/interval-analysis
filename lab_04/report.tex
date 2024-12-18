@@ -1,0 +1,266 @@
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english, russian]{babel}
+\usepackage{graphicx}
+\graphicspath{ {./estimations/} }
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\pagestyle{empty} %
+\usepackage[pageanchor]{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{indentfirst}
+\usepackage{tikz}
+
+\newcommand{\kaucher}{
+  \begin{tikzpicture}
+    \draw (0, 0) circle (0.6ex);
+    \draw (-0.6ex, 0) -- (0.6ex, 0);
+  \end{tikzpicture}%
+}
+
+\begin{document}
+  \begin{titlepage}
+    \begin{center}
+      Санкт-Петербургский политехнический университет \\Петра Великого
+    \end{center}
+
+    \begin{center}
+      Физико-механический институт
+    \end{center}
+
+    \begin{center}
+      Высшая школа прикладной математики и вычислительной\\ физики
+    \end{center}
+
+    \vspace{8em}
+
+    \begin{center}
+      \textbf{Отчет по лабораторной работе №4}\\
+      \textbf{“Интервальный анализ”}
+    \end{center}
+
+    \vspace{\fill}
+
+    \begin{flushright}
+      \noindentВыполнили студент группы 5030102/10201:
+      \hfill
+      Умнов Сергей Алексеевич \\
+    \end{flushright}
+    Преподаватель: \hfill Баженов Александр Николаевич
+
+    \vspace{12em}
+
+    \begin{center}
+      Санкт-Петербург\\
+      2024
+    \end{center}
+  \end{titlepage}
+
+  \tableofcontents
+
+  \newpage
+
+  \section{Постановка задачи}
+
+  Определить параметры линейной регрессии
+
+  \begin{equation} \label{eq:islau}
+    \mathbf{y} = \beta_0 + \beta_1 \mathbf{x},
+  \end{equation}
+
+  где \( \mathbf{x} \) --- входные данные, \( \mathbf{y} \) --- интервальные
+  выходные данные, \( \beta_0 \), \( \beta_1 \) --- параметры линейной
+  регрессии.
+
+  Для калибровки измерителя, на вход подаётся набор постоянных
+  напряжений
+
+  \begin{equation}
+    X = \{ x_i \}.
+  \end{equation}
+
+  Для надёжности, для каждого значения \( x \) проводится 100 измерений.
+
+  Получается набор интервальных выборок
+
+  \begin{equation}
+    \mathbf{Y} = \{ \mathbf{y}_k \}_{k=1}^{100}.
+  \end{equation}
+
+  \( \text{rad} \mathbf{y} = \frac{1}{2^N} \) В, \( N = 14 \).
+
+  Связь кодов данных и В:
+
+  \begin{equation}
+    V = \text{Code} / 16384 - 0.5.
+  \end{equation}
+  Требуется:
+  \begin{enumerate}
+    \item   Сделать оценки значений \( \mathbf{Y} \) двумя способами:
+
+    \begin{itemize}
+      \item in: как интервал между первым и третьим квартилем
+      \item ex: как границы бокс-плота
+    \end{itemize}
+  
+    \item Решить ИСЛАУ (\ref{eq:islau}) для внутренних и внешних оценок
+    \( \mathbf{y} \)
+  
+    \item Построить множество решений \( \beta_0 \), \( \beta_1 \).
+  
+    \item Построить коридор совместных зависимостей.
+  \end{enumerate}
+  \section{Теория}
+
+  \subsection{Интервальная мода}
+
+  Имеется интервальная выборка
+
+  \[
+    \mathbf{X} = \{ \mathbf{x}_i \}.
+  \]
+
+  Сформируем массив интервалов \( \mathbf{z} \) из концов интервалов
+  \( \mathbf{X} \).
+
+  Для каждого интервала \( \mathbf{z}_i \) вычисляем число \( \mu_i \)
+  интервалов из выборки \( \mathbf{X}_i \), включающих \( \mathbf{z}_i \).
+
+  Максимальные \( \mu_i = \max \mu \) достигаются для индексного множества
+  \( K \). Тогда можно найти интервальную моду как мультиинтервал
+
+  \begin{equation}
+    \text{mode} \mathbf{X} = \bigcup_{k \in K} \mathbf{z}_k.
+  \end{equation}
+
+  \section{Реализаця}
+
+  Лабораторная работа выполнена на языке программирования Python. В ходе
+  работы были также использованы библиотеки \verb!numpy! и
+  \verb!matplotlib!.
+
+
+  Ссылка на GitHub репозиторий:
+  \url{https://github.com/vainmoon/interval-analysis}
+
+  \subsection{Алгоритм}
+  Алгоритм поиска оценок параметров линейной регрессии заключается в следующем.
+
+  Каждый из файлов содержит 100 фреймов, каждый из которых включает
+  1024 массива, состоящих из 8 двухбайтовых значений. В результате
+  обработки этих данных было сформировано \( 1024 \times 8 = 8192 \)
+  интервальных систем линейных алгебраических уравнений: 
+
+  \[
+    \begin{pmatrix}
+    [x_1 - \text{rad} \mathbf{y}, x_1 + \text{rad} \mathbf{y}] &
+    [1 - \text{rad} \mathbf{y}, 1 + \text{rad} \mathbf{y}] \\
+    \vdots & \vdots \\
+    [x_8 - \text{rad} \mathbf{y}, x_8 + \text{rad} \mathbf{y}] &
+    [1 - \text{rad} \mathbf{y}, 1 + \text{rad} \mathbf{y}]
+    \end{pmatrix}
+    \begin{pmatrix}
+    \beta_1 \\
+    \beta_0
+    \end{pmatrix}
+    = \begin{pmatrix}
+    \hat{\mathbf{y}}_{1i} \\
+    \vdots \\
+    \hat{\mathbf{y}}_{8i}
+    \end{pmatrix}, \ i \in \overline{1,8192}
+  \]
+
+  Для каждого отдельного пикселя фрейма:
+  \begin{itemize}
+    \item \( x_j \) --- вольтаж, определяемый по названию файла
+    \item \( \hat{\mathbf{y}}_{ji} \) --- оценка значения, соответствующее каждому пикселю (по каждому фрейму)
+    \item \( j \) --- порядковый номер файла
+    \item  \( i \) --- номер пикселя внутри файла
+    \item \( \beta_0 \) и \( \beta_1 \) --- параметры линейной регрессии
+  \end{itemize}
+
+  Полчуенные множества интервальных оценок:
+  \begin{itemize}
+    \item \( \mathbf{B}_0 = \{ \mathbf{\beta}_0 \}_{i=1}^{8192} \)
+    \item \( \mathbf{B}_1 = \{ \mathbf{\beta}_1 \}_{i=1}^{8192} \)
+  \end{itemize}
+
+  Оценка каждого
+  из параметров линейной регрессии производится следующим образом:
+
+  \[ \hat{\mathbf{\beta}}_0 = \text{mode} \mathbf{B}_0, \]
+  \[ \hat{\mathbf{\beta}}_1 = \text{mode} \mathbf{B}_1. \]
+
+  Таким образом, конечные значения \( \hat{\mathbf{\beta}}_0 \) и
+  \( \hat{\mathbf{\beta}}_1 \) служат наиболее вероятными оценками
+  параметров регрессии, что позволяет более точно анализировать
+  зависимость между переменными в исследуемых данных.
+
+  \section{Результаты}
+
+  \subsection{Внутренняя оценка}
+
+  Результаты внутренней оценки
+
+  \[
+    \text{mode} \mathbf{B}_0
+      = \{ [8083.32, 8083.33], [8086.78, 8086.8] \},
+  \]
+  \[
+    \text{mode} \mathbf{B}_1 = [13074.2, 13074.5].
+  \]
+
+    \begin{figure}[htbp!]
+        \begin{center}
+            \includegraphics[width = 0.65\textwidth]{mode_in}
+            \caption{Коридор совместных зависимостей для внутренней оценки.}
+    \label{figure:int_est}
+        \end{center}
+    \end{figure}
+
+  \subsection{Внешняя оценка}
+
+  Результаты внешней оценки
+
+  \[
+    \text{mode} \mathbf{B}_0 = \bigcap_{i=1}^{8192} \mathbf{\beta}_{0i}
+      = [7928.86, 8223.23],
+  \]
+  \[
+    \text{mode} \mathbf{B}_1 = \bigcap_{i=1}^{8192} \mathbf{\beta}_{1i}
+      = [13101.8, 13570.1].
+  \]
+
+    \begin{figure}[htbp!]
+        \begin{center}
+            \includegraphics[width = 0.65\textwidth]{mode_ex}
+            \caption{Коридор совместных зависимостей для внешней оценки.}
+    \label{figure:ext_est}
+        \end{center}
+    \end{figure}
+
+    \clearpage
+    \section{Выводы}
+    В ходе выполнения лабораторной работы была реализована методика оценки  
+    параметров линейной регрессии на основе интервальных данных. 
+
+    Что удалось сделать:
+    
+    \begin{itemize}  
+      \item Разработать алгоритм для вычисления внутренних и внешних границ  
+        оценок параметров линейной регрессии для учёта  
+        неопределённости исходных данных.  
+      \item Получить интервальные значения параметров \( \beta_0 \) и  
+        \( \beta_1 \), которые отражают возможный диапазон их изменения.  
+      \item Построить области совместной зависимости, визуализирующие  
+        интервальные решения и позволяющие анализировать устойчивость модели.  
+    \end{itemize}  
+    
+    Полученные результаты демонстрируют, что данный подход обеспечивает более  
+    адекватное моделирование зависимостей в условиях неопределённости данных.  
+    Методика особенно полезна в ситуациях, где точность измерений  
+    варьируется, и требуется надёжная оценка параметров модели.  
+  \end{document}
